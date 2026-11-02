@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сысертский Вестник — Электронная газета округа</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        paper: '#F9F8F5',
+                        ink: '#1A2228',
+                        azure: '#1B4965',
+                        pine: '#2D5A27',
+                        copper: '#C87D32',
+                        borderline: '#D8D4C8'
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-paper text-ink font-sans antialiased selection:bg-copper selection:text-white">
+
+    <!-- Верхняя инфо-полоса -->
+    <div class="bg-azure text-white text-xs py-2 px-4 border-b border-ink/20">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-4">
+                <span id="current-date" class="font-medium text-amber-200"></span>
+                <span>•</span>
+                <span>Сысерть: +4°C, облачно</span>
+                <span class="hidden sm:inline">•</span>
+                <span class="hidden sm:inline">Автобус №130 (Сысерть — Екб): каждые 25 мин</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="bg-pine px-2 py-0.5 rounded text-[11px] font-semibold tracking-wider uppercase">Сысертский ГО</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Шапка газеты с гербовой стилистикой -->
+    <header class="max-w-7xl mx-auto px-4 pt-6 pb-4 border-b-4 border-double border-ink">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="w-14 h-16 rounded-b-full bg-azure border-2 border-copper flex flex-col items-center justify-between p-1.5 shadow-sm shrink-0" title="По мотивам герба Сысерти">
+                    <div class="text-amber-300 text-lg leading-none">🌲</div>
+                    <div class="w-6 h-4 bg-copper rounded-sm flex items-center justify-center text-[9px] font-bold text-white border border-amber-200">СЗ</div>
+                    <div class="w-full h-2 bg-pine rounded-b-full"></div>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-widest text-pine font-bold">Общественно-информационное издание округа</p>
+                    <h1 class="font-serif text-4xl sm:text-5xl font-extrabold text-azure tracking-tight">СЫСЕРТСКИЙ ВЕСТНИК</h1>
+                </div>
+            </div>
+
+            <!-- Кнопка парсера -->
+            <div class="flex flex-col items-end">
+                <button onclick="triggerScraper()" id="scrape-btn" class="bg-copper hover:bg-amber-700 text-white font-semibold px-4 py-2 rounded shadow transition flex items-center space-x-2 text-sm cursor-pointer">
+                    <span>🔄 Обновить сводку (Парсер)</span>
+                </button>
+                <span id="status-msg" class="text-[11px] text-gray-500 mt-1">Редакция работает в штатном режиме</span>
+            </div>
+        </div>
+
+        <!-- Фильтр по населённым пунктам округа -->
+        <div class="mt-5 pt-3 border-t border-borderline flex items-center gap-2 overflow-x-auto pb-1">
+            <span class="text-xs font-bold uppercase text-gray-500 shrink-0 mr-1">Территория:</span>
+            <button onclick="filterSettlement('Все', this)" class="settlement-btn px-3 py-1 rounded-full text-xs font-semibold bg-azure text-white transition cursor-pointer">Все (Округ)</button>
+            <button onclick="filterSettlement('Сысерть', this)" class="settlement-btn px-3 py-1 rounded-full text-xs font-medium bg-stone-200 hover:bg-stone-300 text-ink transition cursor-pointer">Сысерть</button>
+            <button onclick="filterSettlement('Патруши', this)" class="settlement-btn px-3 py-1 rounded-full text-xs font-medium bg-stone-200 hover:bg-stone-300 text-ink transition cursor-pointer">Патруши</button>
+            <button onclick="filterSettlement('Большой Исток', this)" class="settlement-btn px-3 py-1 rounded-full text-xs font-medium bg-stone-200 hover:bg-stone-300 text-ink transition cursor-pointer">Большой Исток</button>
+            <button onclick="filterSettlement('Бобровский', this)" class="settlement-btn px-3 py-1 rounded-full text-xs font-medium bg-stone-200 hover:bg-stone-300 text-ink transition cursor-pointer">Бобровский</button>
+            <button onclick="filterSettlement('Верхняя Сысерть', this)" class="settlement-btn px-3 py-1 rounded-full text-xs font-medium bg-stone-200 hover:bg-stone-300 text-ink transition cursor-pointer">Верхняя Сысерть</button>
+            <button onclick="filterSettlement('Двуреченск', this)" class="settlement-btn px-3 py-1 rounded-full text-xs font-medium bg-stone-200 hover:bg-stone-300 text-ink transition cursor-pointer">Двуреченск</button>
+            <button onclick="filterSettlement('Щелкун', this)" class="settlement-btn px-3 py-1 rounded-full text-xs font-medium bg-stone-200 hover:bg-stone-300 text-ink transition cursor-pointer">Щелкун</button>
+        </div>
+    </header>
+
+    <!-- Навигация по рубрикам -->
+    <nav class="max-w-7xl mx-auto px-4 py-2.5 border-b border-borderline bg-stone-100/60 flex space-x-6 overflow-x-auto text-sm font-semibold text-azure">
+        <button onclick="filterCategory('Все', this)" class="cat-btn hover:text-copper transition cursor-pointer text-azure font-bold">Все рубрики</button>
+        <button onclick="filterCategory('ЖКХ и Инфраструктура', this)" class="cat-btn hover:text-copper transition cursor-pointer text-gray-600">ЖКХ и Дороги</button>
+        <button onclick="filterCategory('События и Культура', this)" class="cat-btn hover:text-copper transition cursor-pointer text-gray-600">Афиша и Культура</button>
+        <button onclick="filterCategory('Официально', this)" class="cat-btn hover:text-copper transition cursor-pointer text-gray-600">Официально</button>
+    </nav>
+
+    <!-- Основная сетка газеты -->
+    <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Левая и центральная колонка: Статьи (8 колонок) -->
+        <div class="lg:col-span-8 space-y-6">
+            <div class="flex items-center justify-between border-b-2 border-azure pb-2">
+                <h2 class="font-serif text-2xl font-bold text-azure">Главные материалы</h2>
+                <span id="filter-indicator" class="text-xs font-semibold text-pine bg-pine/10 px-2.5 py-1 rounded">Весь округ • Все рубрики</span>
+            </div>
+
+            <div id="articles-container" class="space-y-6"></div>
+        </div>
+
+        <!-- Правая колонка: Пульс пабликов -->
+        <aside class="lg:col-span-4 space-y-6">
+            <div class="bg-white p-5 rounded border border-borderline shadow-sm">
+                <div class="flex items-center justify-between border-b border-borderline pb-3 mb-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-copper animate-pulse"></span>
+                        <h3 class="font-serif text-xl font-bold text-ink">Пульс пабликов</h3>
+                    </div>
+                    <span class="text-[11px] bg-stone-100 px-2 py-0.5 rounded text-gray-600 font-medium">TG + VK</span>
+                </div>
+                <div class="space-y-4 text-sm">
+                    <div class="border-l-2 border-pine pl-3 py-1">
+                        <span class="text-[11px] font-bold text-pine uppercase">Подслушано Сысерть • 15 мин назад</span>
+                        <p class="mt-0.5 text-ink">На перекрёстке Коммуны — Карла Либкнехта заработал новый светофор с кнопкой для пешеходов.</p>
+                    </div>
+                    <div class="border-l-2 border-copper pl-3 py-1">
+                        <span class="text-[11px] font-bold text-copper uppercase">Лето на Заводе • 1 час назад</span>
+                        <p class="mt-0.5 text-ink">В эти выходные в цеху пройдёт ярмарка уральских мастеров и лекция по истории заводов.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Справочник округа -->
+            <div class="bg-azure text-white p-5 rounded shadow-sm">
+                <h3 class="font-serif text-lg font-bold text-amber-300 border-b border-white/20 pb-2 mb-3">Справка по округу</h3>
+                <ul class="space-y-2 text-xs">
+                    <li class="flex justify-between"><span>ЕДДС Сысертского ГО:</span> <span class="font-bold">8 (34374) 6-02-95</span></li>
+                    <li class="flex justify-between"><span>Автовокзал Сысерть:</span> <span class="font-bold">8 (34374) 6-15-84</span></li>
+                    <li class="flex justify-between"><span>Парк «Бажовские места»:</span> <span class="font-bold">Открыт с 08:00 до 20:00</span></li>
+                </ul>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        let currentSettlement = 'Все';
+        let currentCategory = 'Все';
+
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('ru-RU', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        // База новостей
+        let articlesData = [
+            {
+                title: "Реконструкция набережной Сысертского пруда: утверждён финальный проект",
+                summary: "Новые деревянные пирсы, велодорожка до исторического центра и тёплые павильоны появятся уже к следующему сезону.",
+                category: "ЖКХ и Инфраструктура",
+                settlement: "Сысерть",
+                source_name: "Сысертские Вести",
+                published_at: "Сегодня, 14:20"
+            },
+            {
+                title: "В Верхней Сысерти завершился осенний турнир по пиклболу и семейный фестиваль",
+                summary: "Соревнования собрали участников со всего Урала. Публикуем итоги матчей и фоторепортаж с лесных кортов.",
+                category: "События и Культура",
+                settlement: "Верхняя Сысерть",
+                source_name: "Спорт Сысерть",
+                published_at: "Сегодня, 12:05"
+            },
+            {
+                title: "В Патрушах и Большом Истоке обновят систему уличного освещения на 12 улицах",
+                summary: "Старые лампы заменят на энергоэффективные светодиодные светильники до конца месяца.",
+                category: "ЖКХ и Инфраструктура",
+                settlement: "Патруши",
+                source_name: "Администрация СГО",
+                published_at: "Вчера, 18:40"
+            },
+            {
+                title: "В Двуреченске стартовал капитальный ремонт главного моста через реку Сысерть",
+                summary: "Движение транспорта организовано по временной схеме. Подрядчик обещает завершить основные работы до заморозков.",
+                category: "ЖКХ и Инфраструктура",
+                settlement: "Двуреченск",
+                source_name: "Маяк СГО",
+                published_at: "Вчера, 10:15"
+            },
+            {
+                title: "На заводе Турчаниновых-Соломирских анонсировали программу зимнего сезона",
+                summary: "Организаторы готовят каток, ремесленные мастерские и гастрономический фестиваль уральской кухни.",
+                category: "События и Культура",
+                settlement: "Сысерть",
+                source_name: "TG: Лето на Заводе",
+                published_at: "Позавчера, 16:00"
+            }
+        ];
+
+        function loadArticles() {
+            document.getElementById('filter-indicator').innerText = `${currentSettlement} • ${currentCategory}`;
+            
+            const filtered = articlesData.filter(a => {
+                const matchSettlement = (currentSettlement === 'Все' || a.settlement === currentSettlement);
+                const matchCategory = (currentCategory === 'Все' || a.category === currentCategory);
+                return matchSettlement && matchCategory;
+            });
+            
+            renderArticles(filtered);
+        }
+
+        function renderArticles(articles) {
+            const container = document.getElementById('articles-container');
+            if (!articles || articles.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center bg-white border border-borderline rounded text-gray-500 shadow-sm">В этой рубрике или населённом пункте пока нет материалов. Нажмите кнопку «Обновить сводку» выше.</div>`;
+                return;
+            }
+            container.innerHTML = articles.map(art => `
+                <article class="bg-white p-6 rounded border border-borderline shadow-sm hover:shadow-md transition">
+                    <div class="flex flex-wrap items-center gap-2 text-xs mb-2">
+                        <span class="bg-pine text-white px-2.5 py-0.5 rounded font-semibold">${art.settlement}</span>
+                        <span class="text-copper font-bold uppercase tracking-wider">${art.category}</span>
+                        <span class="text-gray-400">•</span>
+                        <span class="text-gray-500">${art.source_name} (${art.published_at})</span>
+                    </div>
+                    <h3 class="font-serif text-2xl font-bold text-ink hover:text-azure cursor-pointer leading-snug mb-3">${art.title}</h3>
+                    <div class="bg-paper border-l-4 border-copper p-3 text-sm text-gray-700 mb-2">
+                        <span class="font-bold text-copper text-xs uppercase block mb-0.5">Краткая суть:</span>
+                        ${art.summary}
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function filterSettlement(name, btnElement) {
+            currentSettlement = name;
+            document.querySelectorAll('.settlement-btn').forEach(btn => {
+                btn.className = "settlement-btn px-3 py-1 rounded-full text-xs font-medium bg-stone-200 hover:bg-stone-300 text-ink transition cursor-pointer";
+            });
+            btnElement.className = "settlement-btn px-3 py-1 rounded-full text-xs font-semibold bg-azure text-white transition cursor-pointer";
+            loadArticles();
+        }
+
+        function filterCategory(cat, btnElement) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = "cat-btn hover:text-copper transition cursor-pointer text-gray-600 font-normal";
+            });
+            btnElement.className = "cat-btn hover:text-copper transition cursor-pointer text-azure font-bold";
+            loadArticles();
+        }
+
+        function triggerScraper() {
+            const btn = document.getElementById('scrape-btn');
+            btn.innerText = "⏳ Опрос пабликов Сысерти...";
+            
+            setTimeout(() => {
+                const freshPool = [
+                    {
+                        title: "В Сысерти начался монтаж праздничной иллюминации на центральной площади",
+                        summary: "Коммунальные службы приступили к украшению зоны отдыха к предстоящим зимним праздникам.",
+                        category: "ЖКХ и Инфраструктура",
+                        settlement: "Сысерть",
+                        source_name: "TG: Администрация СГО",
+                        published_at: "Только что"
+                    },
+                    {
+                        title: "В Большом Истоке провели внеплановую проверку качества воды",
+                        summary: "Специалисты взяли пробы на насосной станции после обращений местных жителей в соцсетях.",
+                        category: "ЖКХ и Инфраструктура",
+                        settlement: "Большой Исток",
+                        source_name: "TG: Сысерть в курсе",
+                        published_at: "Пару минут назад"
+                    }
+                ];
+                const randomNews = freshPool[Math.floor(Math.random() * freshPool.length)];
+                articlesData.unshift(randomNews);
+                loadArticles();
+                
+                btn.innerText = "✅ Сводка обновлена!";
+                setTimeout(() => btn.innerText = "🔄 Обновить сводку (Парсер)", 2000);
+            }, 800);
+        }
+
+        // Первичная загрузка
+        loadArticles();
+    </script>
+</body>
+</html>
